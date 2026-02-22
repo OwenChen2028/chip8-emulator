@@ -260,54 +260,39 @@ void decode_execute() {
     case 0x0004: // add registers
       X = (opcode & 0x0F00) >> 8;
       Y = (opcode & 0x00F0) >> 4;
-
       unsigned short sum = V[X] + V[Y]; // 2 bytes
-
       V[X] = sum & 0xFF;
       V[0xF] = sum > 255;
-
       break;
     case 0x0005: // subtract registers
       X = (opcode & 0x0F00) >> 8;
       Y = (opcode & 0x00F0) >> 4;
-
       VX = V[X];
       VY = V[Y];
-
       V[X] = VX - VY;
       V[0xF] = VX >= VY;
-
       break;
     case 0x0006: // right shift
       X = (opcode & 0x0F00) >> 8;
       Y = (opcode & 0x00F0) >> 4;
-
       VY = V[Y];
-
       V[X] = VY >> 1;
       V[0xF] = VY & 0x1;
-
       break;
     case 0x0007: // subtract registers reversed
       X = (opcode & 0x0F00) >> 8;
       Y = (opcode & 0x00F0) >> 4;
-
       VX = V[X];
       VY = V[Y];
-
       V[X] = VY - VX;
       V[0xF] = VY >= VX;
-
       break;
     case 0x000E: // left shift
       X = (opcode & 0x0F00) >> 8;
       Y = (opcode & 0x00F0) >> 4;
-
       VY = V[Y];
-
       V[X] = VY << 1;
       V[0xF] = VY >> 7;
-
       break;
     }
     break;
@@ -339,7 +324,6 @@ void decode_execute() {
       unsigned short row = memory[I + dy];
 
       int y = VY + dy;
-
       if (y >= SCREEN_HEIGHT) {
         break;
       }
@@ -347,22 +331,18 @@ void decode_execute() {
       for (int dx = 0; dx < 8; dx++) {
         if (row >> (7 - dx) & 0x1) {
           int x = VX + dx;
-
           if (x >= SCREEN_WIDTH) {
             break;
           }
 
           int pos = (y * SCREEN_WIDTH + x);
-
           if (display[pos]) {
             V[0xF] = 1;
           }
-
           display[pos] ^= true;
         }
       }
     }
-
     break;
   case 0xE000:
     switch (opcode & 0x00FF) {
@@ -392,20 +372,15 @@ void decode_execute() {
         }
       } else {
         bool key_found = false;
-
         for (int i = 0; i < 16; i++) {
           if (key[i]) {
             unsigned short X = (opcode & 0x0F00) >> 8;
-
             V[X] = i;
-
             key_wait = X;
             key_found = true;
-
             break;
           }
         }
-
         PC -= 2;
       }
       break;
@@ -423,28 +398,22 @@ void decode_execute() {
       break;
     case 0x0033: // bcd conversion
       unsigned char VX = V[(opcode & 0x0F00) >> 8];
-
       memory[I] = VX / 100;
       memory[I + 1] = (VX / 10) % 10;
       memory[I + 2] = VX % 10;
-
       break;
     case 0x0055: // store memory
       X = (opcode & 0x0F00) >> 8;
-
       for (int i = 0; i <= X; i++) {
         memory[I + i] = V[i];
       }
-
       I += X + 1; // spec dependent
       break;
     case 0x0065: // load memory
       X = (opcode & 0x0F00) >> 8;
-
       for (int i = 0; i <= X; i++) {
         V[i] = memory[I + i];
       }
-
       I += X + 1; // spec dependent
       break;
     }
@@ -485,14 +454,13 @@ void game_loop() {
   while (true) {
     uint32_t start = SDL_GetTicks();
 
-      for (int i = 0; i < CYCLES_PER_FRAME; i++) {
-        handle_events();
+    for (int i = 0; i < CYCLES_PER_FRAME; i++) {
+      handle_events();
+      fetch_opcode();
+      decode_execute();
+    }
 
-        fetch_opcode();
-        decode_execute();
-      }
-
-      handle_timers();
+    handle_timers();
 
     if (draw_flag) {
       draw_screen();
@@ -512,7 +480,6 @@ int main(int argc, char *argv[]) {
 
     char buffer[4096 - PROGRAM_ADDRESS];
     ssize_t bytes = read(fd, buffer, 4096 - PROGRAM_ADDRESS);
-
     if (bytes < 0) {
       exit(EXIT_FAILURE);
     }
