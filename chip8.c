@@ -20,24 +20,19 @@
 #define FONT_ADDRESS 0
 
 unsigned char memory[4096]; // 4 KB
-
 bool display[SCREEN_WIDTH * SCREEN_HEIGHT]; // black or white
 
 unsigned short PC = PROGRAM_ADDRESS; // 16 bit
 unsigned short I = 0;                // 16 bit
-
 unsigned short stack[16]; // 16 bit
 unsigned char stack_top = 0;
-
 unsigned char delay_timer; // 8 bit
 unsigned char sound_timer; // 8 bit
-
 unsigned char V[16]; // 8 bit
 
 SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Texture *screen;
-
 uint32_t colors[2]; // black and white
 
 bool key[16]; // defaults to false
@@ -63,7 +58,6 @@ unsigned char font[] = {
 };
 
 unsigned short opcode; // 16 bit
-
 bool draw_flag = true;
 
 void sdl_setup() {
@@ -188,7 +182,6 @@ void fetch_opcode() {
 void decode_execute() {
   unsigned short X;
   unsigned short Y;
-
   unsigned char VX;
   unsigned char VY;
 
@@ -312,17 +305,13 @@ void decode_execute() {
     break;
   case 0xD000: // draw sprite
     draw_flag = true;
-
     VX = V[(opcode & 0x0F00) >> 8] % SCREEN_WIDTH;
     VY = V[(opcode & 0x00F0) >> 4] % SCREEN_HEIGHT;
-
     unsigned short N = opcode & 0x000F; // height
-
     V[0xF] = 0;
 
     for (int dy = 0; dy < N; dy++) {
       unsigned short row = memory[I + dy];
-
       int y = VY + dy;
       if (y >= SCREEN_HEIGHT) {
         break;
@@ -334,7 +323,6 @@ void decode_execute() {
           if (x >= SCREEN_WIDTH) {
             break;
           }
-
           int pos = (y * SCREEN_WIDTH + x);
           if (display[pos]) {
             V[0xF] = 1;
