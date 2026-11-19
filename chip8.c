@@ -64,38 +64,28 @@ void sdl_setup() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     exit(EXIT_FAILURE);
   }
-
   window =
       SDL_CreateWindow("CHIP8", SDL_WINDOWPOS_UNDEFINED,
                        SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * SCALE_FACTOR,
                        SCREEN_HEIGHT * SCALE_FACTOR, SDL_WINDOW_SHOWN);
-
   if (window == NULL) {
     exit(EXIT_FAILURE);
   }
-
   renderer = SDL_CreateRenderer(
       window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
   if (renderer == NULL) {
     exit(EXIT_FAILURE);
   }
-
   SDL_PixelFormat *format = SDL_AllocFormat(SDL_GetWindowPixelFormat(window));
-
   if (format == NULL) {
     exit(EXIT_FAILURE);
   }
-
   colors[0] = SDL_MapRGB(format, 0x00, 0x00, 0x00); // black
   colors[1] = SDL_MapRGB(format, 0xFF, 0xFF, 0xFF); // white
-
   SDL_FreeFormat(format);
-
   screen = SDL_CreateTexture(renderer, SDL_GetWindowPixelFormat(window),
                              SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH,
                              SCREEN_HEIGHT);
-
   if (screen == NULL) {
     exit(EXIT_FAILURE);
   }
@@ -103,20 +93,16 @@ void sdl_setup() {
 
 void handle_events() {
   SDL_Event event;
-
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
       SDL_DestroyTexture(screen);
       SDL_DestroyRenderer(renderer);
       SDL_DestroyWindow(window);
       SDL_Quit();
-
       exit(EXIT_SUCCESS);
     }
-
     if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
       bool keydown = (event.type == SDL_KEYDOWN);
-
       switch (event.key.keysym.sym) {
       case SDLK_1:
         key[0x1] = keydown;
@@ -130,7 +116,6 @@ void handle_events() {
       case SDLK_4:
         key[0xC] = keydown;
         break;
-
       case SDLK_q:
         key[0x4] = keydown;
         break;
@@ -143,7 +128,6 @@ void handle_events() {
       case SDLK_r:
         key[0xD] = keydown;
         break;
-
       case SDLK_a:
         key[0x7] = keydown;
         break;
@@ -156,7 +140,6 @@ void handle_events() {
       case SDLK_f:
         key[0xE] = keydown;
         break;
-
       case SDLK_z:
         key[0xA] = keydown;
         break;
@@ -184,7 +167,6 @@ void decode_execute() {
   unsigned short Y;
   unsigned char VX;
   unsigned char VY;
-
   switch (opcode & 0xF000) {
   case 0x0000:
     switch (opcode) {
@@ -309,14 +291,12 @@ void decode_execute() {
     VY = V[(opcode & 0x00F0) >> 4] % SCREEN_HEIGHT;
     unsigned short N = opcode & 0x000F; // height
     V[0xF] = 0;
-
     for (int dy = 0; dy < N; dy++) {
       unsigned short row = memory[I + dy];
       int y = VY + dy;
       if (y >= SCREEN_HEIGHT) {
         break;
       }
-
       for (int dx = 0; dx < 8; dx++) {
         if (row >> (7 - dx) & 0x1) {
           int x = VX + dx;
@@ -413,7 +393,6 @@ void handle_timers() {
   if (delay_timer > 0) {
     delay_timer--;
   }
-
   if (sound_timer > 0) {;
     printf("\a");
     fflush(stdout);
@@ -424,13 +403,10 @@ void handle_timers() {
 void draw_screen() {
   uint32_t *pixels;
   int pitch;
-
   SDL_LockTexture(screen, NULL, (void **)&pixels, &pitch);
-
   for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
     pixels[i] = colors[display[i]];
   }
-
   SDL_UnlockTexture(screen);
   SDL_RenderCopy(renderer, screen, NULL, NULL);
   SDL_RenderPresent(renderer);
@@ -438,23 +414,18 @@ void draw_screen() {
 
 void game_loop() {
   int duration = 1000 / FRAMES_PER_SECOND;
-
   while (true) {
     uint32_t start = SDL_GetTicks();
-
     for (int i = 0; i < CYCLES_PER_FRAME; i++) {
       handle_events();
       fetch_opcode();
       decode_execute();
     }
-
     handle_timers();
-
     if (draw_flag) {
       draw_screen();
       draw_flag = false;
     }
-
     uint32_t time = SDL_GetTicks() - start;
     if (time < duration) {
       SDL_Delay(duration - time);
@@ -465,27 +436,20 @@ void game_loop() {
 int main(int argc, char *argv[]) {
   if (argc >= 2) {
     int fd = open(argv[1], O_RDONLY);
-
     char buffer[4096 - PROGRAM_ADDRESS];
     ssize_t bytes = read(fd, buffer, 4096 - PROGRAM_ADDRESS);
     if (bytes < 0) {
       exit(EXIT_FAILURE);
     }
-
     close(fd);
-
     for (ssize_t i = 0; i < bytes; i++) {
       memory[i + PROGRAM_ADDRESS] = buffer[i];
     }
   }
-
   sdl_setup();
-
   for (int i = 0; i < sizeof(font); i++) {
     memory[i + FONT_ADDRESS] = font[i];
   }
-
   srand(time(NULL));
-
   game_loop();
 }
